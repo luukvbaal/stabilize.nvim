@@ -1,4 +1,4 @@
-M = {}
+local M = {}
 local api = vim.api
 local cmd = vim.cmd
 local fn = vim.fn
@@ -17,13 +17,12 @@ end
 function M.save_window()
 	schedule(function()
 		local win = api.nvim_get_current_win()
-		local wininfo = fn.getwininfo(win)[1]
-		if filter_window(win, wininfo) then return end
 		if windows[win] then
-			windows[win].topline = wininfo.topline
-			windows[win].cursor = api.nvim_win_get_cursor(0)
+			windows[win].topline = tonumber(fn.line("w0"))
 			if windows[win].forcecursor then
 				windows[win].cursor = windows[win].forcecursor
+			else
+				windows[win].cursor = api.nvim_win_get_cursor(0)
 				windows[win].forcecursor = nil
 			end
 		end
@@ -31,21 +30,28 @@ function M.save_window()
 end
 
 local function restore_windows()
-	for win, winstate in pairs(windows) do
-		fn.win_execute(win, "call cursor(" .. winstate.topline .. "," .. 0 .. [[)
-												 normal! zt]])
-		local lastline = tonumber(fn.win_execute(win,"echo line('w$')"))
-		if winstate.forcecursor then
-			fn.win_execute(win, "call cursor(" .. winstate.forcecursor[1] .. "," .. winstate.forcecursor[2] + 1 .. ")")
-			winstate.forcecursor = nil
-		elseif lastline and winstate.cursor[1] > lastline and cfg.force then
-			fn.win_execute(win, "call cursor(" .. lastline .. "," .. winstate.cursor[2] + 1 .. ")")
-			winstate.forcecursor = winstate.cursor
-		else
-			fn.win_execute(win, "call cursor(" .. winstate.cursor[1] .. "," .. winstate.cursor[2] + 1 .. ")")
+	local ignored = api.nvim_get_option("eventignore")
+	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
+	schedule(function()
+		local curwin = api.nvim_get_current_win()
+		for win, winstate in pairs(windows) do
+			api.nvim_set_current_win(win)
+			api.nvim_win_set_cursor(0, { winstate.topline, 0 })
+			cmd("normal! zt")
+			local lastline = tonumber(fn.line('w$'))
+			if winstate.forcecursor then
+				api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
+				winstate.forcecursor = nil
+			elseif lastline and winstate.cursor[1] > lastline and cfg.force then
+				api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
+				winstate.forcecursor = winstate.cursor
+			else
+				api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] })
+			end
 		end
-	end
-	cmd("doautocmd BufEnter")
+		api.nvim_set_current_win(curwin)
+		api.nvim_set_option("eventignore", ignored)
+	end)
 end
 
 function M.handle_new()
@@ -55,9 +61,8 @@ function M.handle_new()
 		if not filter_window(win, wininfo) then
 			if not windows[win] then windows[win] = { topline = 1, cursor = api.nvim_win_get_cursor(0) } end
 		end
-		restore_windows()
 	end)
-	schedule(function() restore_windows() end)
+	restore_windows()
 end
 
 function M.handle_closed()
@@ -70,7 +75,7 @@ function M.handle_closed()
 			end
 		end
 	end)
-	schedule(function() restore_windows() end)
+	restore_windows()
 end
 
 function M.setup(setup_cfg)
