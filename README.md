@@ -36,13 +36,14 @@ Some window events triggered by autocommands seem to mess up the window stabiliz
 autocmd QuickFixCmdPost [^l]* copen | doautocmd User StabilizeRestore
 autocmd QuickFixCmdPost l* lopen | doautocmd User StabilizeRestore
 ```
-The same same `QuickFixCmdPost` autocommand for [trouble.nvim](https://github.com/folke/trouble.nvim) does not require this workaround for some reason:
+The same same `QuickFixCmdPost` autocommand for [trouble.nvim](https://github.com/folke/trouble.nvim):
 ```vim
 lua << EOF
 function _G.TroubleQuickFixPost(mode)
 	require("trouble.providers").get(vim.api.nvim_get_current_win(), vim.api.nvim_get_current_buf(), function(items)
 		if #items > 0 then require("trouble").open({mode = mode}) end
 	end, { mode = mode })
+	vim.cmd("doautocmd User StabilizeRestore")
 end
 EOF
 autocmd QuickFixCmdPost [^l]* lua TroubleQuickFixPost("quickfix")
@@ -51,16 +52,16 @@ autocmd QuickFixCmdPost l* lua TroubleQuickFixPost("loclist")
 On the other hand, stabilizing the `auto_open` feature for trouble.nvim currently requires the following diff:
 ```diff
 diff --git a/lua/trouble/init.lua b/lua/trouble/init.lua
-index bfb2d92..7ee34f5 100644
+index bfb2d92..527d1ed 100644
 --- a/lua/trouble/init.lua
 +++ b/lua/trouble/init.lua
-@@ -62,6 +62,7 @@ function Trouble.open(...)
-   else
-     view = View.create(opts)
+@@ -134,6 +134,7 @@ function Trouble.refresh(opts)
+     require("trouble.providers").get(vim.api.nvim_get_current_win(), vim.api.nvim_get_current_buf(), function(results)
+       if #results > 0 then
+         Trouble.open(opts)
++        vim.cmd("doautocmd User StabilizeRestore")
+       end
+     end, config.options)
    end
-+  vim.cmd("doautocmd User StabilizeRestore")
- end
-
- function Trouble.toggle(...)
 ```
 Not sure if these workarounds can be avoided.
