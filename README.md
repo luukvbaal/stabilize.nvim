@@ -27,7 +27,10 @@ The plugin will stabilize your buffer content on window open/close events after 
 ```lua
 {
   force = true, -- stabilize window even when current cursor position will be hidden behind new window
-  ft_ignore = { "help", "list", "Trouble" } -- do not manage windows matching these filetypes
+	ignore = {  -- do not manage windows matching these file/buftypes
+	filetype = { "help", "list", "Trouble" },
+	buftype = { "terminal", "quickfix", "loclist" }
+	}
 }
 ```
 ## Note

@@ -3,15 +3,17 @@ local api = vim.api
 local cmd = vim.cmd
 local fn = vim.fn
 local schedule = vim.schedule
-local cfg = { force = true, ft_ignore = { "help", "list", "Trouble" } }
+local npcall = vim.F.npcall
+local cfg = { force = true, ignore = { filetype = { "help", "list", "Trouble" }, buftype = { "terminal", "quickfix", "loclist" } } }
 local windows = {}
 windows[api.nvim_get_current_win()] = { topline = 1, cursor = api.nvim_win_get_cursor(0) }
 
-local function filter_window(win, wininfo)
+local function filter_window(win)
 	local ft = api.nvim_buf_get_option(0, "filetype")
-	if fn.getwinvar(win, "&previewwindow") == "1" or vim.tbl_contains(cfg.ft_ignore, ft) then return true end
-	if wininfo.quickfix == 1 or wininfo.loclist == 1 or wininfo.terminal == 1 then return true end
-	return false
+	local bt = api.nvim_buf_get_option(0, "buftype")
+	return npcall(api.nvim_win_get_var, win, "previewwindow") or
+		vim.tbl_contains(cfg.ignore.filetype, ft) or
+		vim.tbl_contains(cfg.ignore.buftype, bt)
 end
 
 function M.save_window()
@@ -57,8 +59,7 @@ end
 function M.handle_new()
 	schedule(function()
 		local win = api.nvim_get_current_win()
-		local wininfo = fn.getwininfo(win)[1]
-		if not filter_window(win, wininfo) then
+		if not filter_window(win) then
 			if not windows[win] then windows[win] = { topline = 1, cursor = api.nvim_win_get_cursor(0) } end
 		end
 	end)
