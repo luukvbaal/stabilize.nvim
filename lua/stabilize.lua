@@ -18,14 +18,14 @@ end
 
 function M.save_window()
 	schedule(function()
-		local win = api.nvim_get_current_win()
-		if windows[win] then
-			windows[win].topline = tonumber(fn.line("w0"))
-			if windows[win].forcecursor then
-				windows[win].cursor = windows[win].forcecursor
+		local win = windows[api.nvim_get_current_win()]
+		if win then
+			win.topline = tonumber(fn.line("w0"))
+			if win.forcecursor then
+				win.cursor = win.forcecursor
 			else
-				windows[win].cursor = api.nvim_win_get_cursor(0)
-				windows[win].forcecursor = nil
+				win.cursor = api.nvim_win_get_cursor(0)
+				win.forcecursor = nil
 			end
 		end
 	end)
@@ -60,7 +60,7 @@ function M.handle_new()
 	schedule(function()
 		local win = api.nvim_get_current_win()
 		if not filter_window(0) then
-			if not windows[win] then windows[win] = { topline = 1, cursor = api.nvim_win_get_cursor(0) } end
+			if not windows[win] then windows[win] = { topline = tonumber(fn.line("w0")), cursor = api.nvim_win_get_cursor(0) } end
 		end
 	end)
 	if api.nvim_win_get_config(0).relative == "" then M.restore_windows() end
