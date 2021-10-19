@@ -79,7 +79,7 @@ function M.handle_closed()
 end
 
 function M.setup(setup_cfg)
-	if setup_cfg then cfg = vim.tbl_deep_extend("force", cfg, setup_cfg) end
+	setup_cfg = vim.tbl_deep_extend("force", cfg, setup_cfg or {})
 	cmd [[
 	augroup Stabilize
 		autocmd!
