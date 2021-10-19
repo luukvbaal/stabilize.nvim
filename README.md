@@ -33,8 +33,8 @@ The plugin will stabilize your buffer content on window open/close events after 
 ## Note
 Some window events triggered by autocommands seem to mess up the window stabilization. A user command `User StabilizeRestore` is provided to restore the windows after such events (requiring manual configuration). For example opening the quickfix list after running a QuickFixCmd(i.e. `vimgrep`) will not be stable without manually triggering `StabilizeRestore`:
 ```vim
-	autocmd QuickFixCmdPost [^l]* copen | doautocmd User StabilizeRestore
-	autocmd QuickFixCmdPost l* lopen | doautocmd User StabilizeRestore
+autocmd QuickFixCmdPost [^l]* copen | doautocmd User StabilizeRestore
+autocmd QuickFixCmdPost l* lopen | doautocmd User StabilizeRestore
 ```
 The same same `QuickFixCmdPost` autocommand for [trouble.nvim](https://github.com/folke/trouble.nvim) does not require this workaround for some reason:
 ```vim
@@ -51,14 +51,14 @@ autocmd QuickFixCmdPost l* lua TroubleQuickFixPost("loclist")
 On the other hand, stabilizing the `auto_open` feature for trouble.nvim currently requires the following diff:
 ```diff
 diff --git a/lua/trouble/init.lua b/lua/trouble/init.lua
-index bfb2d92..7249337 100644
+index bfb2d92..7ee34f5 100644
 --- a/lua/trouble/init.lua
 +++ b/lua/trouble/init.lua
 @@ -62,6 +62,7 @@ function Trouble.open(...)
    else
      view = View.create(opts)
    end
-+       vim.cmd("doautocmd WinNew")
++  vim.cmd("doautocmd User StabilizeRestore")
  end
 
  function Trouble.toggle(...)
