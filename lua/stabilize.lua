@@ -32,6 +32,7 @@ function M.save_window()
 end
 
 function M.restore_windows()
+	if api.nvim_win_get_config(0) ~= "" then return end
 	local ignored = api.nvim_get_option("eventignore")
 	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
 	schedule(function()
