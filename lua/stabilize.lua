@@ -35,20 +35,20 @@ function M.restore_windows()
 	local ignored = api.nvim_get_option("eventignore")
 	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
 	schedule(function()
+		local select = api.nvim_get_mode().mode == "s"
 		local curwin = api.nvim_get_current_win()
 		for win, winstate in pairs(windows) do
 			api.nvim_set_current_win(win)
-			api.nvim_win_set_cursor(0, { winstate.topline, 0 })
-			cmd("normal! zt")
+			fn.winrestview({ topline = winstate.topline })
 			local lastline = tonumber(fn.line('w$'))
 			if winstate.forcecursor then
-				api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
+				api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] + (select and 1 or 0) })
 				winstate.forcecursor = nil
 			elseif lastline and winstate.cursor[1] > lastline and cfg.force then
-				api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
+				api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] + (select and 1 or 0) })
 				winstate.forcecursor = winstate.cursor
 			else
-				api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] })
+				api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] + (select and 1 or 0) })
 			end
 		end
 		api.nvim_set_current_win(curwin)
