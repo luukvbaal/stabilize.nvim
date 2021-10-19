@@ -32,7 +32,6 @@ function M.save_window()
 end
 
 function M.restore_windows()
-	if api.nvim_win_get_config(0).relative ~= "" then return end
 	local ignored = api.nvim_get_option("eventignore")
 	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
 	schedule(function()
@@ -60,24 +59,16 @@ end
 function M.handle_new()
 	schedule(function()
 		local win = api.nvim_get_current_win()
-		if not filter_window(win) then
+		if not filter_window(0) then
 			if not windows[win] then windows[win] = { topline = 1, cursor = api.nvim_win_get_cursor(0) } end
 		end
 	end)
-	M.restore_windows()
+	if api.nvim_win_get_config(0).relative == "" then M.restore_windows() end
 end
 
-function M.handle_closed()
-	schedule(function()
-		local winlist = api.nvim_list_wins()
-		for win, _ in pairs(windows) do
-			if not vim.tbl_contains(winlist, win) then
-				windows[win] = nil
-				return
-			end
-		end
-	end)
-	M.restore_windows()
+function M.handle_closed(win)
+	windows[win] = nil
+	if api.nvim_win_get_config(win).relative == "" then M.restore_windows() end
 end
 
 function M.setup(setup_cfg)
@@ -86,7 +77,7 @@ function M.setup(setup_cfg)
 	augroup Stabilize
 		autocmd!
 		autocmd WinNew * :lua require('stabilize').handle_new()
-		autocmd WinClosed * :lua require('stabilize').handle_closed()
+		autocmd WinClosed * :lua require('stabilize').handle_closed(tonumber(vim.fn.expand("<afile>")))
 		autocmd CursorMoved,CursorMovedI * :lua require('stabilize').save_window()
 		autocmd User StabilizeRestore :lua require('stabilize').restore_windows()
 	augroup END
