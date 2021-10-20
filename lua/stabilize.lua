@@ -8,14 +8,6 @@ local cfg = { force = true, ignore = { filetype = { "help", "list", "Trouble" },
 local windows = {}
 windows[api.nvim_get_current_win()] = { topline = 1, cursor = api.nvim_win_get_cursor(0) }
 
-local function filter_window(win)
-	local ft = api.nvim_buf_get_option(0, "filetype")
-	local bt = api.nvim_buf_get_option(0, "buftype")
-	return npcall(api.nvim_win_get_var, win, "previewwindow") or
-		vim.tbl_contains(cfg.ignore.filetype, ft) or
-		vim.tbl_contains(cfg.ignore.buftype, bt)
-end
-
 function M.save_window()
 	local win = windows[api.nvim_get_current_win()]
 	if win then
@@ -56,8 +48,11 @@ end
 
 function M.handle_new()
 	schedule(function()
-		local win = api.nvim_get_current_win()
-		if not filter_window(0) then
+		local ft = api.nvim_buf_get_option(0, "filetype")
+		local bt = api.nvim_buf_get_option(0, "buftype")
+		if not (npcall(api.nvim_win_get_var, 0, "previewwindow") or vim.tbl_contains(cfg.ignore.filetype, ft) or
+				vim.tbl_contains(cfg.ignore.buftype, bt)) then
+			local win = api.nvim_get_current_win()
 			if not windows[win] then windows[win] = { topline = tonumber(fn.line("w0")), cursor = api.nvim_win_get_cursor(0) } end
 		end
 	end)
