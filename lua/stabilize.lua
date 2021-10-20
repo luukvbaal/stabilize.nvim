@@ -17,18 +17,16 @@ local function filter_window(win)
 end
 
 function M.save_window()
-	schedule(function()
-		local win = windows[api.nvim_get_current_win()]
-		if win then
-			win.topline = tonumber(fn.line("w0"))
-			if win.forcecursor then
-				win.cursor = win.forcecursor
-			else
-				win.cursor = api.nvim_win_get_cursor(0)
-				win.forcecursor = nil
-			end
+	local win = windows[api.nvim_get_current_win()]
+	if win then
+		win.topline = tonumber(fn.line("w0"))
+		if win.forcecursor then
+			win.cursor = win.forcecursor
+		else
+			win.cursor = api.nvim_win_get_cursor(0)
+			win.forcecursor = nil
 		end
-	end)
+	end
 end
 
 function M.restore_windows()
