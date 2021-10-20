@@ -12,8 +12,9 @@ function M.save_window()
 	local win = windows[api.nvim_get_current_win()]
 	if win then
 		win.topline = tonumber(fn.line("w0"))
-		if win.forcecursor then
+		if win.forcecursor and win.force then
 			win.cursor = win.forcecursor
+			win.force = false
 		else
 			win.cursor = api.nvim_win_get_cursor(0)
 			win.forcecursor = nil
@@ -34,9 +35,10 @@ function M.restore_windows()
 			if winstate.forcecursor then
 				api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] + (select and 1 or 0) })
 				winstate.forcecursor = nil
-			elseif lastline and winstate.cursor[1] > lastline and cfg.force then
+			elseif cfg.force and lastline and winstate.cursor[1] > lastline then
 				api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] + (select and 1 or 0) })
 				winstate.forcecursor = winstate.cursor
+				winstate.force = true
 			else
 				api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] + (select and 1 or 0) })
 			end
