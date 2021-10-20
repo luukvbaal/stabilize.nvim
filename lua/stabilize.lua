@@ -4,7 +4,7 @@ local cmd = vim.cmd
 local fn = vim.fn
 local schedule = vim.schedule
 local npcall = vim.F.npcall
-local cfg = { force = true, ignore = { filetype = { "help", "list", "Trouble" }, buftype = { "terminal", "quickfix", "loclist" } } }
+local cfg = { force = true, forcemark = nil, ignore = { filetype = { "help", "list", "Trouble" }, buftype = { "terminal", "quickfix", "loclist" } } }
 local windows = {}
 windows[api.nvim_get_current_win()] = { topline = 1, cursor = api.nvim_win_get_cursor(0) }
 
@@ -36,6 +36,7 @@ function M.restore_windows()
 				api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] + (select and 1 or 0) })
 				winstate.forcecursor = nil
 			elseif cfg.force and lastline and winstate.cursor[1] > lastline then
+				if cfg.forcemark then vim.fn.setpos("'" .. cfg.forcemark, vim.fn.getcurpos()) end
 				api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] + (select and 1 or 0) })
 				winstate.forcecursor = winstate.cursor
 				winstate.force = true
