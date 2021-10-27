@@ -26,23 +26,26 @@ function M.restore_windows()
 	local ignored = api.nvim_get_option("eventignore")
 	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
 	schedule(function()
-		local mode = api.nvim_get_mode().mode
 		local curwin = api.nvim_get_current_win()
 		for win, winstate in pairs(windows) do
-			api.nvim_set_current_win(win)
-			fn.winrestview({ topline = winstate.topline })
-			if mode ~= "i" then
-				local lastline = tonumber(fn.line('w$'))
-				if winstate.forcecursor then
-					api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] + (select == "s" and 1 or 0) })
-					winstate.forcecursor = nil
-				elseif cfg.force and lastline and winstate.cursor[1] > lastline then
-					if cfg.forcemark then vim.fn.setpos("'" .. cfg.forcemark, vim.fn.getcurpos()) end
-					api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] + (select == "s" and 1 or 0) })
-					winstate.forcecursor = winstate.cursor
-					winstate.force = true
-				else
-					api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] + (select == "s" and 1 or 0) })
+			if not api.nvim_win_is_valid(win) then
+				windows[win] = nil
+			else
+				api.nvim_set_current_win(win)
+				fn.winrestview({ topline = winstate.topline })
+				if api.nvim_get_mode().mode ~= "i" then
+					local lastline = tonumber(fn.line('w$'))
+					if winstate.forcecursor then
+						api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] + (select == "s" and 1 or 0) })
+						winstate.forcecursor = nil
+					elseif cfg.force and lastline and winstate.cursor[1] > lastline then
+						if cfg.forcemark then vim.fn.setpos("'" .. cfg.forcemark, vim.fn.getcurpos()) end
+						api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] + (select == "s" and 1 or 0) })
+						winstate.forcecursor = winstate.cursor
+						winstate.force = true
+					else
+						api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] + (select == "s" and 1 or 0) })
+					end
 				end
 			end
 		end
