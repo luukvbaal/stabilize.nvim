@@ -6,7 +6,6 @@ local schedule = vim.schedule
 local npcall = vim.F.npcall
 local cfg = { force = true, forcemark = nil, ignore = { filetype = { "help", "list", "Trouble" }, buftype = { "terminal", "quickfix", "loclist" } } }
 local windows = {}
-windows[api.nvim_get_current_win()] = { topline = 1, cursor = api.nvim_win_get_cursor(0) }
 
 function M.save_window()
 	local win = windows[api.nvim_get_current_win()]
@@ -74,7 +73,11 @@ end
 
 function M.setup(setup_cfg)
 	if setup_cfg then cfg = vim.tbl_deep_extend("force", cfg, setup_cfg) end
-	cmd [[
+	for _, win in ipairs(api.nvim_list_wins()) do
+		api.nvim_set_current_win(win)
+		windows[win] = { topline = tonumber(fn.line("w0")), cursor = api.nvim_win_get_cursor(0) }
+	end
+	cmd[[
 	augroup Stabilize
 		autocmd!
 		autocmd WinNew * :lua require('stabilize').handle_new()
