@@ -53,16 +53,18 @@ function M.restore_windows()
 	end)
 end
 
+local function add_win()
+	local ft = api.nvim_buf_get_option(0, "filetype")
+	local bt = api.nvim_buf_get_option(0, "buftype")
+	if not (npcall(api.nvim_win_get_var, 0, "previewwindow") or vim.tbl_contains(cfg.ignore.filetype, ft) or
+			vim.tbl_contains(cfg.ignore.buftype, bt)) then
+		local win = api.nvim_get_current_win()
+		if not windows[win] then windows[win] = { topline = tonumber(fn.line("w0")), cursor = api.nvim_win_get_cursor(0) } end
+	end
+end
+
 function M.handle_new()
-	schedule(function()
-		local ft = api.nvim_buf_get_option(0, "filetype")
-		local bt = api.nvim_buf_get_option(0, "buftype")
-		if not (npcall(api.nvim_win_get_var, 0, "previewwindow") or vim.tbl_contains(cfg.ignore.filetype, ft) or
-				vim.tbl_contains(cfg.ignore.buftype, bt)) then
-			local win = api.nvim_get_current_win()
-			if not windows[win] then windows[win] = { topline = tonumber(fn.line("w0")), cursor = api.nvim_win_get_cursor(0) } end
-		end
-	end)
+	schedule(function() add_win() end)
 	if api.nvim_win_get_config(0).relative == "" then M.restore_windows() end
 end
 
@@ -75,7 +77,7 @@ function M.setup(setup_cfg)
 	if setup_cfg then cfg = vim.tbl_deep_extend("force", cfg, setup_cfg) end
 	for _, win in ipairs(api.nvim_list_wins()) do
 		api.nvim_set_current_win(win)
-		windows[win] = { topline = tonumber(fn.line("w0")), cursor = api.nvim_win_get_cursor(0) }
+		add_win()
 	end
 	cmd[[
 	augroup Stabilize
