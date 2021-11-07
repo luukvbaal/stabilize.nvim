@@ -6,6 +6,7 @@ local schedule = vim.schedule
 local npcall = vim.F.npcall
 local cfg = { force = true, forcemark = nil, ignore = { filetype = { "help", "list", "Trouble" }, buftype = { "terminal", "quickfix", "loclist" } } }
 local windows = {}
+local numwins = #api.nvim_tabpage_list_wins(0)
 
 function M.save_window()
 	local win = windows[api.nvim_get_current_win()]
@@ -22,9 +23,11 @@ function M.save_window()
 end
 
 function M.restore_windows()
-	local ignored = api.nvim_get_option("eventignore")
-	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
 	schedule(function()
+		if #api.nvim_tabpage_list_wins(0) == numwins then return end
+		numwins = #api.nvim_tabpage_list_wins(0)
+		local ignored = api.nvim_get_option("eventignore")
+		api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
 		local curwin = api.nvim_get_current_win()
 		for win, winstate in pairs(windows) do
 			if not api.nvim_win_is_valid(win) then
@@ -86,8 +89,11 @@ function M.setup(setup_cfg)
 		autocmd WinClosed * :lua require('stabilize').handle_closed(tonumber(vim.fn.expand("<afile>")))
 		autocmd CursorMoved,CursorMovedI * :lua require('stabilize').save_window()
 		autocmd User StabilizeRestore :lua require('stabilize').restore_windows()
-	augroup END
 	]]
+	if cfg.nested then
+		vim.cmd("autocmd "..cfg.nested.." doautocmd User StabilizeRestore")
+	end
+	vim.cmd("augroup END")
 end
 
 return M
