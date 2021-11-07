@@ -23,11 +23,14 @@ function M.save_window()
 end
 
 function M.restore_windows()
+	local ignored = api.nvim_get_option("eventignore")
+	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
 	schedule(function()
-		if #api.nvim_tabpage_list_wins(0) == numwins then return end
+		if #api.nvim_tabpage_list_wins(0) == numwins then
+			api.nvim_set_option("eventignore", ignored)
+			return
+		end
 		numwins = #api.nvim_tabpage_list_wins(0)
-		local ignored = api.nvim_get_option("eventignore")
-		api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
 		local curwin = api.nvim_get_current_win()
 		for win, winstate in pairs(windows) do
 			if not api.nvim_win_is_valid(win) then
