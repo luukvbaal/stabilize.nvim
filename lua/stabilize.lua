@@ -6,6 +6,7 @@ local schedule = vim.schedule
 local cfg = { force = true, forcemark = nil, ignore = { filetype = { "help", "list", "Trouble" }, buftype = { "terminal", "quickfix", "loclist" } } }
 local windows = {}
 local numwins = #api.nvim_tabpage_list_wins(0)
+local ignored = api.nvim_get_option("eventignore")
 
 function M.save_window()
 	local win = windows[api.nvim_get_current_win()]
@@ -21,7 +22,6 @@ function M.save_window()
 end
 
 function M.restore_windows()
-	local ignored = api.nvim_get_option("eventignore")
 	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
 	schedule(function()
 		if #api.nvim_tabpage_list_wins(0) == numwins then
@@ -66,6 +66,7 @@ local function add_win()
 end
 
 function M.handle_new()
+	ignored = api.nvim_get_option("eventignore")
 	schedule(function() add_win() end)
 	if api.nvim_win_get_config(0).relative == "" then M.restore_windows() end
 end
