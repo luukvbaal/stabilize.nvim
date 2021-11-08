@@ -41,15 +41,15 @@ function M.restore_windows()
 				if api.nvim_get_mode().mode ~= "i" then
 					local lastline = tonumber(fn.line('w$'))
 					if winstate.forcecursor then
-						api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] + (select == "s" and 1 or 0) })
+						api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
 						winstate.forcecursor = nil
 					elseif cfg.force and lastline and winstate.cursor[1] > lastline then
 						if cfg.forcemark then vim.fn.setpos("'" .. cfg.forcemark, vim.fn.getcurpos()) end
-						api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] + (select == "s" and 1 or 0) })
+						api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
 						winstate.forcecursor = winstate.cursor
 						winstate.force = true
 					else
-						api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] + (select == "s" and 1 or 0) })
+						api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] })
 					end
 				end
 			end
