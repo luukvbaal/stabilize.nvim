@@ -3,22 +3,20 @@ local api = vim.api
 local cmd = vim.cmd
 local fn = vim.fn
 local schedule = vim.schedule
-local npcall = vim.F.npcall
 local cfg = { force = true, forcemark = nil, ignore = { filetype = { "help", "list", "Trouble" }, buftype = { "terminal", "quickfix", "loclist" } } }
 local windows = {}
 local numwins = #api.nvim_tabpage_list_wins(0)
 
 function M.save_window()
 	local win = windows[api.nvim_get_current_win()]
-	if win then
-		win.topline = tonumber(fn.line("w0"))
-		if win.forcecursor and win.force then
-			win.cursor = win.forcecursor
-			win.force = false
-		else
-			win.cursor = api.nvim_win_get_cursor(0)
-			win.forcecursor = nil
-		end
+	if not win then return end
+	win.topline = tonumber(fn.line("w0"))
+	if win.forcecursor and win.force then
+		win.cursor = win.forcecursor
+		win.force = false
+	else
+		win.cursor = api.nvim_win_get_cursor(0)
+		win.forcecursor = nil
 	end
 end
 
@@ -60,13 +58,11 @@ function M.restore_windows()
 end
 
 local function add_win()
-	local ft = api.nvim_buf_get_option(0, "filetype")
-	local bt = api.nvim_buf_get_option(0, "buftype")
-	if not (npcall(api.nvim_win_get_var, 0, "previewwindow") or vim.tbl_contains(cfg.ignore.filetype, ft) or
-			vim.tbl_contains(cfg.ignore.buftype, bt)) then
-		local win = api.nvim_get_current_win()
-		if not windows[win] then windows[win] = { topline = tonumber(fn.line("w0")), cursor = api.nvim_win_get_cursor(0) } end
-	end
+	if vim.tbl_contains(cfg.ignore.filetype, api.nvim_buf_get_option(0, "filetype")) or
+		vim.tbl_contains(cfg.ignore.buftype, api.nvim_buf_get_option(0, "buftype")) or
+		vim.F.npcall(api.nvim_win_get_var, 0, "previewwindow") then return end
+    local win = api.nvim_get_current_win()
+    if not windows[win] then windows[win] = { topline = tonumber(fn.line("w0")), cursor = api.nvim_win_get_cursor(0) } end
 end
 
 function M.handle_new()
