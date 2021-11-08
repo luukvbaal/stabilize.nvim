@@ -88,10 +88,10 @@ function M.setup(setup_cfg)
 	cmd[[
 	augroup Stabilize
 		autocmd!
-		autocmd WinNew * :lua require('stabilize').handle_new()
-		autocmd WinClosed * :lua require('stabilize').handle_closed(tonumber(vim.fn.expand("<afile>")))
-		autocmd CursorMoved,CursorMovedI * :lua require('stabilize').save_window()
-		autocmd User StabilizeRestore :lua require('stabilize').restore_windows()
+		autocmd WinNew * lua require('stabilize').handle_new()
+		autocmd WinClosed * lua require('stabilize').handle_closed(tonumber(vim.fn.expand("<afile>")))
+		autocmd CursorMoved,CursorMovedI * lua require('stabilize').save_window()
+		autocmd User StabilizeRestore lua require('stabilize').restore_windows()
 	]]
 	if cfg.nested then
 		vim.cmd("autocmd "..cfg.nested.." doautocmd User StabilizeRestore")
