@@ -22,7 +22,7 @@ function M.save_window()
 end
 
 function M.restore_windows()
-	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew")
+	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew,BufEnter,WinEnter")
 	schedule(function()
 		if #api.nvim_tabpage_list_wins(0) == numwins then
 			api.nvim_set_option("eventignore", ignored)
@@ -78,10 +78,13 @@ end
 
 function M.setup(setup_cfg)
 	if setup_cfg then cfg = vim.tbl_deep_extend("force", cfg, setup_cfg) end
+	ignored = api.nvim_get_option("eventignore")
+	api.nvim_set_option("eventignore", "BufEnter,WinEnter")
 	for _, win in ipairs(api.nvim_list_wins()) do
 		api.nvim_set_current_win(win)
 		add_win()
 	end
+	api.nvim_set_option("eventignore", ignored)
 	cmd[[
 	augroup Stabilize
 		autocmd!
