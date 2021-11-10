@@ -11,7 +11,7 @@ local ignored = api.nvim_get_option("eventignore")
 function M.save_window()
 	local win = windows[api.nvim_get_current_win()]
 	if not win then return end
-	win.topline = tonumber(fn.line("w0"))
+	win.topline = fn.line("w0")
 	if win.forcecursor and win.force then
 		win.cursor = win.forcecursor
 		win.force = false
@@ -37,7 +37,7 @@ function M.restore_windows()
 				api.nvim_set_current_win(win)
 				fn.winrestview({ topline = winstate.topline })
 				if api.nvim_get_mode().mode ~= "i" then
-					local lastline = tonumber(fn.line('w$'))
+					local lastline = fn.line("w$")
 					if winstate.forcecursor then
 						api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
 						winstate.forcecursor = nil
@@ -62,7 +62,7 @@ local function add_win()
 		vim.tbl_contains(cfg.ignore.buftype, api.nvim_buf_get_option(0, "buftype")) or
 		vim.F.npcall(api.nvim_win_get_var, 0, "previewwindow") then return end
     local win = api.nvim_get_current_win()
-    if not windows[win] then windows[win] = { topline = tonumber(fn.line("w0")), cursor = api.nvim_win_get_cursor(0) } end
+    if not windows[win] then windows[win] = { topline = fn.line("w0"), cursor = api.nvim_win_get_cursor(0) } end
 end
 
 function M.handle_new()
