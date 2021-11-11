@@ -42,7 +42,7 @@ function M.restore_windows()
 						api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
 						winstate.forcecursor = nil
 					elseif cfg.force and lastline and winstate.cursor[1] > lastline then
-						if cfg.forcemark then vim.fn.setpos("'" .. cfg.forcemark, vim.fn.getcurpos()) end
+						if cfg.forcemark then vim.fn.setpos("'"..cfg.forcemark, vim.fn.getcurpos()) end
 						api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
 						winstate.forcecursor = winstate.cursor
 						winstate.force = true
@@ -52,7 +52,7 @@ function M.restore_windows()
 				end
 			end
 		end
-		api.nvim_set_current_win(curwin)
+		if api.nvim_win_is_valid(curwin) then api.nvim_set_current_win(curwin) end
 		api.nvim_set_option("eventignore", ignored)
 	end)
 end
