@@ -90,7 +90,7 @@ function M.setup(setup_cfg)
 		autocmd!
 		autocmd WinNew * lua require('stabilize').handle_new()
 		autocmd WinClosed * lua require('stabilize').handle_closed(tonumber(vim.fn.expand("<afile>")))
-		autocmd CursorMoved,CursorMovedI * lua require('stabilize').save_window()
+		autocmd BufWinEnter,CursorMoved,CursorMovedI * lua require('stabilize').save_window()
 		autocmd User StabilizeRestore lua require('stabilize').restore_windows()
 	]]
 	if cfg.nested then
