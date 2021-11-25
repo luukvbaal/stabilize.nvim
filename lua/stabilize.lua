@@ -24,35 +24,33 @@ end
 function M.restore_windows()
 	api.nvim_set_option("eventignore", "CursorMoved,CursorMovedI,WinClosed,WinNew,BufEnter,WinEnter")
 	schedule(function()
-		if #api.nvim_tabpage_list_wins(0) == numwins then
-			api.nvim_set_option("eventignore", ignored)
-			return
-		end
-		numwins = #api.nvim_tabpage_list_wins(0)
-		local curwin = api.nvim_get_current_win()
-		for win, winstate in pairs(windows) do
-			if not api.nvim_win_is_valid(win) then
-				windows[win] = nil
-			else
-				api.nvim_set_current_win(win)
-				fn.winrestview({ topline = winstate.topline })
-				if api.nvim_get_mode().mode ~= "i" then
-					local lastline = fn.line("w$")
-					if winstate.forcecursor then
-						api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
-						winstate.forcecursor = nil
-					elseif cfg.force and lastline and winstate.cursor[1] > lastline then
-						if cfg.forcemark then vim.fn.setpos("'"..cfg.forcemark, vim.fn.getcurpos()) end
-						api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
-						winstate.forcecursor = winstate.cursor
-						winstate.force = true
-					else
-						api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] })
+		local curwins = #api.nvim_tabpage_list_wins(0)
+		if curwins ~= numwins then
+			numwins = curwins
+			local curwin = api.nvim_get_current_win()
+			for win, winstate in pairs(windows) do
+				if not api.nvim_win_is_valid(win) then windows[win] = nil
+				else
+					api.nvim_set_current_win(win)
+					fn.winrestview({ topline = winstate.topline })
+					if api.nvim_get_mode().mode ~= "i" then
+						local lastline = fn.line("w$")
+						if winstate.forcecursor then
+							api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
+							winstate.forcecursor = nil
+						elseif cfg.force and winstate.cursor[1] > lastline then
+							if cfg.forcemark then fn.setpos("'"..cfg.forcemark, fn.getcurpos()) end
+							api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
+							winstate.forcecursor = winstate.cursor
+							winstate.force = true
+						else
+							api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] })
+						end
 					end
 				end
 			end
+			if api.nvim_win_is_valid(curwin) then api.nvim_set_current_win(curwin) end
 		end
-		if api.nvim_win_is_valid(curwin) then api.nvim_set_current_win(curwin) end
 		api.nvim_set_option("eventignore", ignored)
 	end)
 end
@@ -94,9 +92,9 @@ function M.setup(setup_cfg)
 		autocmd User StabilizeRestore lua require('stabilize').restore_windows()
 	]]
 	if cfg.nested then
-		vim.cmd("autocmd "..cfg.nested.." doautocmd User StabilizeRestore")
+		cmd("autocmd "..cfg.nested.." doautocmd User StabilizeRestore")
 	end
-	vim.cmd("augroup END")
+	cmd("augroup END")
 end
 
 return M
