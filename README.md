@@ -57,9 +57,9 @@ plugins window restore function. To stabilize these window events, a config opti
 used to trigger `doautocmd User StabilizeRestore`.
 
 For example, to stabilize window events such as opening the quickfix list
-(or [trouble.nvim](https://github.com/folke/trouble.nvim)) on `QuickFixCmdPost` or `User LspDiagnosticsChanged` events, set the nested cfg to:
+(or [trouble.nvim](https://github.com/folke/trouble.nvim)) on `QuickFixCmdPost` or `DiagnosticChanged` events, set the nested cfg to:
 
-    nested = "QuickFixCmdPost,User LspDiagnosticsChanged"
+    nested = "QuickFixCmdPost,DiagnosticChanged"
 
 The plugin keeps track of the number of windows on the current tabpage and will skip restoring the windows if the
 number of windows hasn't changed since before firing these nested events(performance consideration).
