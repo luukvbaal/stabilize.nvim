@@ -92,7 +92,7 @@ function M.setup(setup_cfg)
 		autocmd User StabilizeRestore lua require('stabilize').restore_windows()
 	]]
 	if cfg.nested then
-		cmd("autocmd "..cfg.nested.." * doautocmd User StabilizeRestore")
+		cmd("autocmd "..cfg.nested.." doautocmd User StabilizeRestore")
 	end
 	cmd("augroup END")
 end
