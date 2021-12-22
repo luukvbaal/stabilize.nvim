@@ -36,7 +36,7 @@ function M.restore_windows()
 					fn.winrestview({ topline = winstate.topline })
 					if api.nvim_get_mode().mode ~= "i" then
 						local lastline = fn.line("w$")
-						if winstate.forcecursor then
+						if winstate.forcecursor and winstate.forcecursor[1] < fn.line("$") then
 							api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
 							winstate.forcecursor = nil
 						elseif cfg.force and winstate.cursor[1] > lastline then
