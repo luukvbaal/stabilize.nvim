@@ -27,29 +27,28 @@ function M.restore_windows()
 	schedule(function()
 		local tabwins = api.nvim_tabpage_list_wins(0)
 		local curwins = #tabwins
-		if curwins ~= numwins then
-			numwins = curwins
-			local curtab = api.nvim_get_current_tabpage()
-			for win, winstate in pairs(windows) do
-				if not api.nvim_win_is_valid(win) then windows[win] = nil
-				elseif windows[win].tab == curtab then api.nvim_win_call(win, function()
-						fn.winrestview({ topline = winstate.topline })
-						if api.nvim_get_mode().mode ~= "i" then
-							local lastline = fn.line("w$")
-							if winstate.forcecursor then
-								api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
-								winstate.forcecursor = nil
-							elseif cfg.force and winstate.cursor[1] > lastline then
-								if cfg.forcemark then fn.setpos("'"..cfg.forcemark, fn.getcurpos()) end
-								api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
-								winstate.forcecursor = winstate.cursor
-								winstate.force = true
-							else
-								api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] })
-							end
+		if curwins == numwins then return end
+		numwins = curwins
+		local curtab = api.nvim_get_current_tabpage()
+		for win, winstate in pairs(windows) do
+			if not api.nvim_win_is_valid(win) then windows[win] = nil
+			elseif windows[win].tab == curtab then api.nvim_win_call(win, function()
+					fn.winrestview({ topline = winstate.topline })
+					if api.nvim_get_mode().mode ~= "i" then
+						local lastline = fn.line("w$")
+						if winstate.forcecursor then
+							api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
+							winstate.forcecursor = nil
+						elseif cfg.force and winstate.cursor[1] > lastline then
+							if cfg.forcemark then fn.setpos("'"..cfg.forcemark, fn.getcurpos()) end
+							api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
+							winstate.forcecursor = winstate.cursor
+							winstate.force = true
+						else
+							api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] })
 						end
-					end)
-				end
+					end
+				end)
 			end
 		end
 		ignore = false
@@ -62,11 +61,7 @@ local function add_win()
 		vim.F.npcall(api.nvim_win_get_var, 0, "previewwindow") then return end
   local win = api.nvim_get_current_win()
   if not windows[win] then
-		windows[win] = {
-			topline = fn.line("w0"),
-			cursor = api.nvim_win_get_cursor(0),
-			tab = api.nvim_get_current_tabpage()
-		}
+		windows[win] = { topline = fn.line("w0"), cursor = api.nvim_win_get_cursor(0), tab = api.nvim_get_current_tabpage() }
 	end
 end
 
