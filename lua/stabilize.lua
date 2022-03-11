@@ -42,7 +42,7 @@ function M.restore_windows()
 							api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
 							winstate.forcecursor = nil
 						elseif cfg.force and winstate.cursor[1] > lastline then
-							if cfg.forcemark then api.nvim_buf_set_mark(0, "'", winstate.cursor[1], winstate.cursor[2]) end
+							if cfg.forcemark then api.nvim_buf_set_mark(0, "'", winstate.cursor[1], winstate.cursor[2], {}) end
 							api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
 							winstate.forcecursor = winstate.cursor
 							winstate.force = true
