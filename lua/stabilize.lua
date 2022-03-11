@@ -1,6 +1,5 @@
 local M = {}
 local api = vim.api
-local cmd = vim.cmd
 local fn = vim.fn
 local schedule = vim.schedule
 local cfg = { force = true, forcemark = nil, ignore = { filetype = { "help", "list", "Trouble" }, buftype = { "terminal", "quickfix", "loclist" } } }
@@ -27,7 +26,10 @@ function M.restore_windows()
 	schedule(function()
 		local tabwins = api.nvim_tabpage_list_wins(0)
 		local curwins = #tabwins
-		if curwins == numwins then return end
+		if curwins == numwins then
+			ignore = false
+			return
+		end
 		numwins = curwins
 		local curtab = api.nvim_get_current_tabpage()
 		for win, winstate in pairs(windows) do
@@ -77,18 +79,25 @@ function M.setup(setup_cfg)
 	for _, win in ipairs(api.nvim_list_wins()) do
 		api.nvim_win_call(win, function() add_win(win) end)
 	end
-	cmd[[
-	augroup Stabilize
-		autocmd!
-		autocmd WinNew * lua require('stabilize').handle_new()
-		autocmd WinClosed * lua require('stabilize').handle_closed(tonumber(vim.fn.expand("<afile>")))
-		autocmd BufWinEnter,CursorMoved,CursorMovedI * lua require('stabilize').save_window()
-		autocmd User StabilizeRestore lua require('stabilize').restore_windows()
-	]]
+	local group = api.nvim_create_augroup("Stabilize", { clear = true })
+	api.nvim_create_autocmd("WinNew", { group = group, callback = function()
+		require("stabilize").handle_new()
+	end})
+	api.nvim_create_autocmd("WinClosed", { group = group, callback = function()
+		require("stabilize").handle_closed(tonumber(vim.fn.expand("<afile>")))
+	end})
+	api.nvim_create_autocmd({ "BufWinEnter", "CursorMoved", "CursorMovedI" }, { group = group, callback = function()
+		require("stabilize").save_window()
+	end})
+	api.nvim_create_autocmd("User StabilizeRestore", { group = group, callback = function()
+		require("stabilize").restore_windows()
+	end})
+
 	if cfg.nested then
-		cmd("autocmd "..cfg.nested.." doautocmd User StabilizeRestore")
+		api.nvim_create_autocmd(cfg.nested, { group = group, callback = function()
+			api.nvim_do_autocmd("User StabilizeRestore", {})
+		end})
 	end
-	cmd("augroup END")
 end
 
 return M
