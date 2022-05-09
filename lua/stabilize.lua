@@ -12,6 +12,7 @@ function M.save_window()
 	local win = windows[api.nvim_get_current_win()]
 	if not win then return end
 	win.topline = fn.line("w0")
+	win.buffer = api.nvim_get_current_buf()
 	if win.forcecursor and win.force then
 		win.cursor = win.forcecursor
 		win.force = false
@@ -31,10 +32,11 @@ function M.restore_windows()
 			return
 		end
 		numwins = curwins
-		local curtab = api.nvim_get_current_tabpage()
 		for win, winstate in pairs(windows) do
 			if not api.nvim_win_is_valid(win) then windows[win] = nil
-			elseif windows[win].tab == curtab then api.nvim_win_call(win, function()
+			elseif winstate.tab == api.nvim_get_current_tabpage() then
+				api.nvim_win_call(win, function()
+					if winstate.buf ~= api.nvim_get_current_buf() then return end
 					fn.winrestview({ topline = winstate.topline })
 					if api.nvim_get_mode().mode ~= "i" then
 						local lastline = fn.line("w$")
@@ -61,7 +63,12 @@ local function add_win(win)
 	if windows[win] or vim.tbl_contains(cfg.ignore.filetype, api.nvim_buf_get_option(0, "filetype")) or
 		vim.tbl_contains(cfg.ignore.buftype, api.nvim_buf_get_option(0, "buftype")) or
 		vim.F.npcall(api.nvim_win_get_var, 0, "previewwindow") then return end
-	windows[win] = { topline = fn.line("w0"), cursor = api.nvim_win_get_cursor(0), tab = api.nvim_get_current_tabpage() }
+	windows[win] = {
+		topline = fn.line("w0"),
+		cursor = api.nvim_win_get_cursor(0),
+		buffer = api.nvim_get_current_buf(),
+		tab = api.nvim_get_current_tabpage()
+	}
 end
 
 function M.handle_new()
@@ -95,7 +102,7 @@ function M.setup(setup_cfg)
 
 	if cfg.nested then
 		api.nvim_create_autocmd(cfg.nested, { group = group, callback = function()
-			api.nvim_do_autocmd("User StabilizeRestore", {})
+			api.nvim_exec_autocmd("User StabilizeRestore", {})
 		end})
 	end
 end
