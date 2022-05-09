@@ -1,6 +1,5 @@
 local M = {}
 local api = vim.api
-local cmd = vim.cmd
 local fn = vim.fn
 local schedule = vim.schedule
 local cfg = { force = true, forcemark = nil, ignore = { filetype = { "help", "list", "Trouble" }, buftype = { "terminal", "quickfix", "loclist" } } }
@@ -13,6 +12,7 @@ function M.save_window()
 	local win = windows[api.nvim_get_current_win()]
 	if not win then return end
 	win.topline = fn.line("w0")
+	win.buffer = api.nvim_get_current_buf()
 	if win.forcecursor and win.force then
 		win.cursor = win.forcecursor
 		win.force = false
@@ -32,10 +32,11 @@ function M.restore_windows()
 			return
 		end
 		numwins = curwins
-		local curtab = api.nvim_get_current_tabpage()
 		for win, winstate in pairs(windows) do
 			if not api.nvim_win_is_valid(win) then windows[win] = nil
-			elseif windows[win].tab == curtab then api.nvim_win_call(win, function()
+			elseif winstate.tab == api.nvim_get_current_tabpage() then
+				api.nvim_win_call(win, function()
+					if winstate.buffer ~= api.nvim_get_current_buf() then return end
 					fn.winrestview({ topline = winstate.topline })
 					if api.nvim_get_mode().mode ~= "i" then
 						local lastline = fn.line("w$")
@@ -62,7 +63,12 @@ local function add_win(win)
 	if windows[win] or vim.tbl_contains(cfg.ignore.filetype, api.nvim_buf_get_option(0, "filetype")) or
 		vim.tbl_contains(cfg.ignore.buftype, api.nvim_buf_get_option(0, "buftype")) or
 		vim.F.npcall(api.nvim_win_get_var, 0, "previewwindow") then return end
-	windows[win] = { topline = fn.line("w0"), cursor = api.nvim_win_get_cursor(0), tab = api.nvim_get_current_tabpage() }
+	windows[win] = {
+		topline = fn.line("w0"),
+		cursor = api.nvim_win_get_cursor(0),
+		buffer = api.nvim_get_current_buf(),
+		tab = api.nvim_get_current_tabpage()
+	}
 end
 
 function M.handle_new()
@@ -80,18 +86,25 @@ function M.setup(setup_cfg)
 	for _, win in ipairs(api.nvim_list_wins()) do
 		api.nvim_win_call(win, function() add_win(win) end)
 	end
-	cmd[[
-	augroup Stabilize
-		autocmd!
-		autocmd WinNew * lua require('stabilize').handle_new()
-		autocmd WinClosed * lua require('stabilize').handle_closed(tonumber(vim.fn.expand("<afile>")))
-		autocmd BufWinEnter,CursorMoved,CursorMovedI * lua require('stabilize').save_window()
-		autocmd User StabilizeRestore lua require('stabilize').restore_windows()
-	]]
+	local group = api.nvim_create_augroup("Stabilize", { clear = true })
+	api.nvim_create_autocmd("WinNew", { group = group, callback = function()
+		require("stabilize").handle_new()
+	end})
+	api.nvim_create_autocmd("WinClosed", { group = group, callback = function()
+		require("stabilize").handle_closed(tonumber(vim.fn.expand("<afile>")))
+	end})
+	api.nvim_create_autocmd({ "BufWinEnter", "CursorMoved", "CursorMovedI" }, { group = group, callback = function()
+		require("stabilize").save_window()
+	end})
+	api.nvim_create_autocmd("User StabilizeRestore", { group = group, callback = function()
+		require("stabilize").restore_windows()
+	end})
+
 	if cfg.nested then
-		cmd("autocmd "..cfg.nested.." doautocmd User StabilizeRestore")
+		api.nvim_create_autocmd(cfg.nested, { group = group, callback = function()
+			api.nvim_exec_autocmd("User StabilizeRestore", {})
+		end})
 	end
-	cmd("augroup END")
 end
 
 return M
