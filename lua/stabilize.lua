@@ -22,38 +22,45 @@ function M.save_window()
 	end
 end
 
+local function restore_window(win, winstate)
+if not api.nvim_win_is_valid(win) then
+	windows[win] = nil
+	return
+end
+
+if winstate.tab ~= api.nvim_get_current_tabpage() then return end
+
+api.nvim_win_call(win, function()
+	if winstate.buffer ~= api.nvim_get_current_buf() then return end
+	fn.winrestview({ topline = winstate.topline })
+	if api.nvim_get_mode().mode ~= "i" then
+		local lastline = fn.line("w$")
+		if winstate.forcecursor and winstate.forcecursor[1] < fn.line("$") then
+			api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
+			winstate.forcecursor = nil
+		elseif cfg.force and winstate.cursor[1] > lastline then
+			if cfg.forcemark then api.nvim_buf_set_mark(0, "'", winstate.cursor[1], winstate.cursor[2], {}) end
+			api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
+			winstate.forcecursor = winstate.cursor
+			winstate.force = true
+		else
+			api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] })
+		end
+	end
+end)
+end
+
 function M.restore_windows()
 	ignore = true
 	schedule(function()
-		local tabwins = api.nvim_tabpage_list_wins(0)
-		local curwins = #tabwins
+		local curwins = #api.nvim_tabpage_list_wins(0)
 		if curwins == numwins then
 			ignore = false
 			return
 		end
 		numwins = curwins
 		for win, winstate in pairs(windows) do
-			if not api.nvim_win_is_valid(win) then windows[win] = nil
-			elseif winstate.tab == api.nvim_get_current_tabpage() then
-				api.nvim_win_call(win, function()
-					if winstate.buffer ~= api.nvim_get_current_buf() then return end
-					fn.winrestview({ topline = winstate.topline })
-					if api.nvim_get_mode().mode ~= "i" then
-						local lastline = fn.line("w$")
-						if winstate.forcecursor and winstate.forcecursor[1] < fn.line("$") then
-							api.nvim_win_set_cursor(0, { winstate.forcecursor[1], winstate.forcecursor[2] })
-							winstate.forcecursor = nil
-						elseif cfg.force and winstate.cursor[1] > lastline then
-							if cfg.forcemark then api.nvim_buf_set_mark(0, "'", winstate.cursor[1], winstate.cursor[2], {}) end
-							api.nvim_win_set_cursor(0, { lastline, winstate.cursor[2] })
-							winstate.forcecursor = winstate.cursor
-							winstate.force = true
-						else
-							api.nvim_win_set_cursor(0, { winstate.cursor[1], winstate.cursor[2] })
-						end
-					end
-				end)
-			end
+			restore_window(win, winstate)
 		end
 		ignore = false
 	end)
