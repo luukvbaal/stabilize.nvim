@@ -103,13 +103,13 @@ function M.setup(setup_cfg)
 	api.nvim_create_autocmd({ "BufWinEnter", "CursorMoved", "CursorMovedI" }, { group = group, callback = function()
 		require("stabilize").save_window()
 	end})
-	api.nvim_create_autocmd("User StabilizeRestore", { group = group, callback = function()
+	api.nvim_create_autocmd("User", { group = group, pattern = "StabilizeRestore", callback = function()
 		require("stabilize").restore_windows()
 	end})
 
 	if cfg.nested then
 		api.nvim_create_autocmd(cfg.nested, { group = group, callback = function()
-			api.nvim_exec_autocmd("User StabilizeRestore", {})
+			api.nvim_exec_autocmd("User", { pattern = "StabilizeRestore" })
 		end})
 	end
 end
