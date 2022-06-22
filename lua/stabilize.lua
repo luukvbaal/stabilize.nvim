@@ -109,7 +109,7 @@ function M.setup(setup_cfg)
 
 	if cfg.nested then
 		api.nvim_create_autocmd(cfg.nested, { group = group, callback = function()
-			api.nvim_exec_autocmd("User", { pattern = "StabilizeRestore" })
+			api.nvim_exec_autocmds("User", { pattern = "StabilizeRestore" })
 		end})
 	end
 end
