@@ -80,12 +80,12 @@ end
 
 function M.handle_new()
 	schedule(function() add_win(api.nvim_get_current_win()) end)
-	if api.nvim_win_get_config(0).relative == "" then M.restore_windows() end
+	M.restore_windows()
 end
 
 function M.handle_closed(win)
 	windows[win] = nil
-	if api.nvim_win_get_config(win).relative == "" then M.restore_windows() end
+	if not api.nvim_win_get_config(win).zindex then M.restore_windows() end
 end
 
 function M.setup(setup_cfg)
