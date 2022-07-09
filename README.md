@@ -1,6 +1,7 @@
 # stabilize.nvim
 
 Neovim plugin to stabilize buffer content on window open/close events.
+There is a currently outstanding [PR](https://github.com/neovim/neovim/pull/19243) to Neovim core that supercedes this plugin.
 
 ## Demo
 
